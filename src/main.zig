@@ -181,7 +181,7 @@ test "stringer" {
     try testing.expectEqual(iter.next(), null);
 }
 
-pub fn SinglyLinkedList(comptime T: type) type {
+pub fn ListConsumer(comptime T: type) type {
     return struct {
         const Self = @This();
 
@@ -224,12 +224,32 @@ test "singly linked list" {
 
     try testing.expect(list.len() == 3);
 
-    var iterator = try SinglyLinkedList(u32).init(list);
-    var iter = &iterator.iterator;
+    var consumer = try ListConsumer(u32).init(list);
+    var iter = &consumer.iterator;
     var c: u32 = 1;
 
     while (iter.next()) |got| {
         try testing.expectEqual(c, got);
         c += 1;
     }
+}
+
+test "fold over singly linked list" {
+    const L = std.SinglyLinkedList(u32);
+    var list = L{};
+
+    try testing.expect(list.len() == 0);
+
+    var one = L.Node{ .data = 1 };
+    var two = L.Node{ .data = 2 };
+    var three = L.Node{ .data = 3 };
+
+    list.prepend(&three);
+    list.prepend(&two);
+    list.prepend(&one);
+
+    var consumer = try ListConsumer(u32).init(list);
+    var iter = &consumer.iterator;
+    const total = fold(u32, add, iter, 0);
+    try testing.expectEqual(total, 0 + 1 + 2 + 3);
 }
